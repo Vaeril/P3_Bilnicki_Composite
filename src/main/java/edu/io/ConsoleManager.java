@@ -10,10 +10,13 @@ public class ConsoleManager {
     boolean endProgram;
     TreeGenerator lastTree;
 
+    DisplayVisitor displayVisitor = new DisplayVisitor();
+    ExportVisitor exportVisitor = new ExportVisitor();
+
     public void Start() throws IOException {
 
         currentPath = Paths.get(System.getProperty("user.dir"));
-        System.out.println("Available commands are: move [dir], scan, showTree, showStats, end");
+        System.out.println("Available commands are: move [dir], scan, showTree, exportTree, end");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         do {
@@ -38,9 +41,9 @@ public class ConsoleManager {
                     showCurrentDirectory();
                     System.out.println("");
                     break;
-                case "showStats":
-                    showStats();
-                    System.out.println("");
+                case "exportTree":
+                    exportTree();
+                    System.out.println("Exported scanned tree.");
                     break;
                 case "end":
                     endProgram = true;
@@ -55,12 +58,12 @@ public class ConsoleManager {
         lastTree.createTree(currentPath);
     }
 
-    void showCurrentDirectory(){
-        lastTree.displayTree();
+    void showCurrentDirectory() throws IOException{
+        lastTree.visitTree(displayVisitor);
     }
 
-    void showStats() {
-        lastTree.displayStats();
+    void exportTree() throws IOException {
+        lastTree.visitTree(exportVisitor);
     }
 
     void changeCurrentPath(String change) {

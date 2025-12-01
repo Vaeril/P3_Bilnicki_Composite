@@ -41,4 +41,9 @@ public class FileNode implements IFileComposite{
     public long lineLength() {
         return lineLength;
     }
+
+    @Override
+    public void accept(IVisitor visitor) throws IOException {
+        visitor.visitNode(this);
+    }
 }

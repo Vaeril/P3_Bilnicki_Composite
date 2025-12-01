@@ -1,5 +1,6 @@
 package edu.io;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -56,5 +57,10 @@ public class FolderNode implements IFileComposite{
             }
         }
         return null;
+    }
+
+    @Override
+    public void accept(IVisitor visitor) throws IOException {
+        visitor.visitNode(this);
     }
 }

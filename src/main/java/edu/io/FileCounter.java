@@ -66,10 +66,18 @@ public class FileCounter {
     }
 
     public String getDisplay(int index){
-        return fileTypeDisplay[index] + ": " + fileCount[index] + ", lines: " + lineCount[index];
+        return fileTypeDisplay[index];
     }
 
     public ArrayList<String> getFilesOfType(int index){
         return filesFound.get(index);
+    }
+
+    public long getLineCount(int index) {
+        return lineCount[index];
+    }
+
+    public int getFileCount(int index){
+        return fileCount[index];
     }
 }

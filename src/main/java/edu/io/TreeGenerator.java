@@ -5,19 +5,28 @@ import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TreeGenerator {
 
     private IFileComposite root;
-    private FileCounter fileCounter = new FileCounter();
 
+    private String[] ignoredFileRegexes;
+
+    public TreeGenerator() {
+        ignoredFileRegexes = new String[]{
+                ".git",
+        };
+    }
     // creating tree
     public void createTree(Path rootPath) throws IOException {
         ArrayList<Path> files = getFiles(rootPath);
 
         root = new FolderNode(rootPath, null);
         for (int i = 1; i < files.size(); i++) {
-            createNode(files.get(i));
+            if(!shouldBeIgnored(files.get(i)))
+                createNode(files.get(i));
         }
     }
 
@@ -36,9 +45,6 @@ public class TreeGenerator {
         FolderNode parent = getParent(path);
         IFileComposite newFile = new FileNode(path, parent);
         parent.add(newFile);
-        if(fileCounter.matchesAnyType(newFile))
-            ((FileNode)newFile).scanLength();
-        fileCounter.checkAndCountFile(newFile);
     }
 
     private void createFolderNode(Path path){
@@ -71,41 +77,39 @@ public class TreeGenerator {
         }
     }
 
-    // displaying
-    public void displayTree(){
+    // visiting tree
+    public void visitTree(IVisitor visitor) throws IOException{
+        visitor.startVisitingTree(root);
+
         ArrayList<IFileComposite> currentPath = new ArrayList<IFileComposite>();
-
         currentPath.add(root);
+        visitChildren(currentPath, visitor);
 
-        displayChildren(currentPath);
+        visitor.endVisitingTree(root);
     }
 
-    private void displayChildren(ArrayList<IFileComposite> currentPath){
+    private void visitChildren(ArrayList<IFileComposite> currentPath, IVisitor visitor) throws IOException{
         IFileComposite last = currentPath.get(currentPath.size() - 1);
 
-        System.out.println("\t");
-        for (int i = 0; i < currentPath.size(); i++) {
-            System.out.print("\t");
-        }
-        System.out.print(last.fileName() + (last.lineLength() > 0 ? " " + last.lineLength() : ""));
+        last.accept(visitor);
 
         if(last instanceof  FolderNode && ((FolderNode)last).getChildCount() > 0){
             for (int i = 0; i < ((FolderNode)last).getChildCount(); i++) {
                 currentPath.add(((FolderNode)last).getChild(i));
-                displayChildren(currentPath);
+                visitChildren(currentPath, visitor);
                 currentPath.remove(currentPath.size() - 1);
             }
         }
     }
 
-    public void displayStats() {
-        for (int i = 0; i < fileCounter.countedTypes(); i++) {
-            System.out.println(fileCounter.getDisplay(i));
-            ArrayList<String> files = fileCounter.getFilesOfType(i);
-
-            for (int j = 0; j < files.size(); j++) {
-                System.out.println("\t" + files.get(j));
+    private boolean shouldBeIgnored(Path path){
+        for (int i = 0; i < ignoredFileRegexes.length; i++) {
+            Pattern pattern = Pattern.compile(ignoredFileRegexes[i], Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(path.toString());
+            if(matcher.find()) {
+                return true;
             }
         }
+        return false;
     }
 }
